@@ -107,6 +107,7 @@ std::vector<Action> makeActions()
         // recording
         { "transport.record", TR_NOOP ("Recording on/off"), Context::global, { chord ('R') } },
         { "transport.metronome", TR_NOOP ("Metronome on/off"), Context::global, { chord ('M', ctrl) } },
+        { "mixer.toggleAllEffects", TR_NOOP ("All mixer effects/plugins on/off (every insert)"), Context::global, { chord ('K', shift) } },
         { "record.countIn", TR_NOOP ("Count-in before recording on/off"), Context::global, { chord ('P', ctrl) } },
         { "record.waitForInput", TR_NOOP ("Recording waits for the first note on/off"), Context::global, { chord ('I', ctrl) } },
         // round 170e3: FL's Options › Blend recorded notes (Ctrl+B), Loop record and Step edit (Ctrl+E) [DFM ShortcutsModule]
