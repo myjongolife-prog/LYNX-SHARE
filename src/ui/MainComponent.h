@@ -191,6 +191,10 @@ private:
     int lastCurrentPattern = -1; // ("Select first channel with notes when the pattern changes")
     void setTypingPiano (bool on);
     void toggleTypingPiano(); // the user's toggle (button, menus, Ctrl+T): also says so in the hint bar
+    // Shift+K: every effect slot on every mixer insert off, or back on. Turning off remembers which slots were on, so
+    // turning on again restores exactly those (slots the user had switched off stay off).
+    void toggleAllMixerEffects();
+    std::vector<std::vector<bool>> mixerEffectsBeforeBypass; // empty = nothing remembered
     juce::String shortcutText (const char* actionId) const; // "\tF5" for menus ("" when unbound)
 
     // panels

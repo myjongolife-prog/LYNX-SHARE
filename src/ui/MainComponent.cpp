@@ -1593,6 +1593,7 @@ bool MainComponent::runAction (const std::string& id)
     else if (is ("transport.nextMarker")) engine.jumpToNextMarker (true);
     else if (is ("transport.previousMarker")) engine.jumpToNextMarker (false);
     else if (is ("view.typingPiano")) toggleTypingPiano();
+    else if (is ("mixer.toggleAllEffects")) toggleAllMixerEffects();
     else if (is ("view.toolbar"))
     {
         auto layout = toolbarLayout;
@@ -1823,6 +1824,62 @@ void MainComponent::toggleTypingPiano()
     ui::Hint hint;
     hint.text = typingPiano ? tr ("Typing keyboard to piano: on (Z..M and Q..P play the selected channels)")
                             : tr ("Typing keyboard to piano: off (letter and number keys are shortcuts)");
+    ui::postHint (hint, 2500);
+}
+
+void MainComponent::toggleAllMixerEffects()
+{
+    const auto& mixer = engine.getSong().mixer;
+    bool anyOn = false, anySlots = false;
+    for (const auto& track : mixer)
+        for (const auto& fx : track.effects)
+        {
+            anySlots = true;
+            anyOn = anyOn || fx.enabled;
+        }
+
+    ui::Hint hint;
+    if (! anySlots)
+    {
+        hint.text = tr ("No effects on the mixer");
+        ui::postHint (hint, 2000);
+        return;
+    }
+
+    if (anyOn)
+    {
+        // remember the current on/off of every slot, then switch all off
+        mixerEffectsBeforeBypass.clear();
+        for (const auto& track : mixer)
+        {
+            std::vector<bool> states;
+            for (const auto& fx : track.effects)
+                states.push_back (fx.enabled);
+            mixerEffectsBeforeBypass.push_back (std::move (states));
+        }
+        engine.editSong ([] (Song& song) {
+            for (auto& track : song.mixer)
+                for (auto& fx : track.effects)
+                    fx.enabled = false;
+        });
+        hint.text = tr ("All mixer effects: off (Shift+K turns them back on)");
+    }
+    else
+    {
+        // restore what was on before; a track whose slots changed since (or nothing remembered) gets all on
+        auto saved = std::move (mixerEffectsBeforeBypass);
+        mixerEffectsBeforeBypass.clear();
+        engine.editSong ([saved] (Song& song) {
+            for (std::size_t t = 0; t < song.mixer.size(); ++t)
+            {
+                auto& effects = song.mixer[t].effects;
+                const bool restore = t < saved.size() && saved[t].size() == effects.size();
+                for (std::size_t i = 0; i < effects.size(); ++i)
+                    effects[i].enabled = restore ? (bool) saved[t][i] : true;
+            }
+        });
+        hint.text = tr ("All mixer effects: on");
+    }
     ui::postHint (hint, 2500);
 }
 
